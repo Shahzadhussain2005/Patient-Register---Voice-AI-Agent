@@ -1,0 +1,373 @@
+[
+  {
+    "type": "apiRequest",
+    "name": "lookup_patient_by_phone",
+    "description": "Look up active patients after the caller confirms their phone number. Uses the same handler as GET /patients?phone_number=. An empty data array means no match; an error never means no match. Multiple matches require disambiguation; do not choose the first record.",
+    "method": "POST",
+    "url": "https://YOUR_BACKEND_HOST/vapi/lookup-patient-by-phone",
+    "timeoutSeconds": 20,
+    "messages": [
+      {
+        "type": "request-response-delayed",
+        "timingMilliseconds": 6000,
+        "content": "I'm still waiting for the result. Thank you for your patience."
+      },
+      {
+        "type": "request-failed",
+        "role": "system",
+        "content": "The request failed. Speak a brief, helpful response. If specific validation fields are available, ask to correct only those fields and get fresh confirmation before saving. Otherwise say the action could not be confirmed. Never invent success, treat lookup failure as no match, or automatically retry a write."
+      }
+    ],
+    "body": {
+      "type": "object",
+      "properties": {
+        "phone_number": {
+          "type": "string",
+          "pattern": "^[0-9]{10}$",
+          "description": "Caller-confirmed US phone number, exactly 10 ASCII digits, no country code or formatting."
+        }
+      },
+      "required": [
+        "phone_number"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "apiRequest",
+    "name": "create_patient",
+    "description": "Create one patient ONLY after reading back every collected field and receiving explicit approval of the latest corrected summary. Include required fields and only supplied optional fields. Omit missing optional values; never invent them. Do not automatically retry a timed-out save.",
+    "method": "POST",
+    "url": "https://YOUR_BACKEND_HOST/patients",
+    "timeoutSeconds": 20,
+    "messages": [
+      {
+        "type": "request-response-delayed",
+        "timingMilliseconds": 6000,
+        "content": "I'm still waiting for the result. Thank you for your patience."
+      },
+      {
+        "type": "request-failed",
+        "role": "system",
+        "content": "The request failed. Speak a brief, helpful response. If specific validation fields are available, ask to correct only those fields and get fresh confirmation before saving. Otherwise say the action could not be confirmed. Never invent success, treat lookup failure as no match, or automatically retry a write."
+      }
+    ],
+    "body": {
+      "type": "object",
+      "properties": {
+        "first_name": {
+          "type": "string",
+          "description": "First name: 1-50 Unicode letters, ASCII hyphens/apostrophes; at least one letter.",
+          "pattern": "^(?=.*\\p{L})[\\p{L}'-]{1,50}$"
+        },
+        "last_name": {
+          "type": "string",
+          "description": "Last name: 1-50 Unicode letters, ASCII hyphens/apostrophes; at least one letter.",
+          "pattern": "^(?=.*\\p{L})[\\p{L}'-]{1,50}$"
+        },
+        "date_of_birth": {
+          "type": "string",
+          "format": "date",
+          "description": "Real calendar date in YYYY-MM-DD format, not after today in UTC. Clarify ambiguous dates."
+        },
+        "sex": {
+          "type": "string",
+          "enum": [
+            "Male",
+            "Female",
+            "Other",
+            "Decline to Answer"
+          ],
+          "description": "The caller's stated choice; never infer it from their name or voice."
+        },
+        "phone_number": {
+          "type": "string",
+          "pattern": "^[0-9]{10}$",
+          "description": "Caller-confirmed US phone number, exactly 10 ASCII digits, no country code or formatting."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Valid email address voluntarily provided by the caller. Omit if not provided."
+        },
+        "address_line_1": {
+          "type": "string",
+          "description": "Nonempty street address, trimmed plain text.",
+          "pattern": "^[\\s\\S]+$"
+        },
+        "address_line_2": {
+          "type": "string",
+          "description": "Apartment, suite, or unit voluntarily provided. Omit if not provided."
+        },
+        "city": {
+          "type": "string",
+          "description": "City, 1-100 characters after trimming whitespace.",
+          "pattern": "^[\\s\\S]{1,100}$"
+        },
+        "state": {
+          "type": "string",
+          "description": "Uppercase two-letter abbreviation for one of the 50 US states or DC.",
+          "enum": [
+            "AK",
+            "AL",
+            "AR",
+            "AZ",
+            "CA",
+            "CO",
+            "CT",
+            "DC",
+            "DE",
+            "FL",
+            "GA",
+            "HI",
+            "IA",
+            "ID",
+            "IL",
+            "IN",
+            "KS",
+            "KY",
+            "LA",
+            "MA",
+            "MD",
+            "ME",
+            "MI",
+            "MN",
+            "MO",
+            "MS",
+            "MT",
+            "NC",
+            "ND",
+            "NE",
+            "NH",
+            "NJ",
+            "NM",
+            "NV",
+            "NY",
+            "OH",
+            "OK",
+            "OR",
+            "PA",
+            "RI",
+            "SC",
+            "SD",
+            "TN",
+            "TX",
+            "UT",
+            "VA",
+            "VT",
+            "WA",
+            "WI",
+            "WV",
+            "WY"
+          ]
+        },
+        "zip_code": {
+          "type": "string",
+          "pattern": "^[0-9]{5}(-[0-9]{4})?$",
+          "description": "Five ASCII digits or ZIP+4 with a hyphen; preserve leading zeros."
+        },
+        "insurance_provider": {
+          "type": "string",
+          "description": "Insurance provider, only when the caller chooses to provide it."
+        },
+        "insurance_member_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9]+$",
+          "description": "Insurance member ID: ASCII letters and digits only. Preserve leading zeros."
+        },
+        "preferred_language": {
+          "type": "string",
+          "description": "Preferred language if volunteered; omit on create for the English default. Does not change the call's configured voice language."
+        },
+        "emergency_contact_name": {
+          "type": "string",
+          "description": "Emergency contact's name, only when offered or opted into."
+        },
+        "emergency_contact_phone": {
+          "type": "string",
+          "pattern": "^[0-9]{10}$",
+          "description": "Emergency contact's US number, exactly 10 ASCII digits."
+        }
+      },
+      "required": [
+        "first_name",
+        "last_name",
+        "date_of_birth",
+        "sex",
+        "phone_number",
+        "address_line_1",
+        "city",
+        "state",
+        "zip_code"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "apiRequest",
+    "name": "update_patient",
+    "description": "Update a selected existing patient ONLY after explicit approval of the latest complete summary. Use the UUID returned by lookup, plus at least one changed demographic field. Omit unchanged fields. Uses the same handler as PUT /patients/{patient_id}. Never guess a UUID or automatically retry an uncertain save.",
+    "method": "POST",
+    "url": "https://YOUR_BACKEND_HOST/vapi/update-patient",
+    "timeoutSeconds": 20,
+    "messages": [
+      {
+        "type": "request-response-delayed",
+        "timingMilliseconds": 6000,
+        "content": "I'm still waiting for the result. Thank you for your patience."
+      },
+      {
+        "type": "request-failed",
+        "role": "system",
+        "content": "The request failed. Speak a brief, helpful response. If specific validation fields are available, ask to correct only those fields and get fresh confirmation before saving. Otherwise say the action could not be confirmed. Never invent success, treat lookup failure as no match, or automatically retry a write."
+      }
+    ],
+    "body": {
+      "type": "object",
+      "properties": {
+        "patient_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Exact patient_id returned by lookup for the selected record."
+        },
+        "first_name": {
+          "type": "string",
+          "description": "First name: 1-50 Unicode letters, ASCII hyphens/apostrophes; at least one letter.",
+          "pattern": "^(?=.*\\p{L})[\\p{L}'-]{1,50}$"
+        },
+        "last_name": {
+          "type": "string",
+          "description": "Last name: 1-50 Unicode letters, ASCII hyphens/apostrophes; at least one letter.",
+          "pattern": "^(?=.*\\p{L})[\\p{L}'-]{1,50}$"
+        },
+        "date_of_birth": {
+          "type": "string",
+          "format": "date",
+          "description": "Real calendar date in YYYY-MM-DD format, not after today in UTC. Clarify ambiguous dates."
+        },
+        "sex": {
+          "type": "string",
+          "enum": [
+            "Male",
+            "Female",
+            "Other",
+            "Decline to Answer"
+          ],
+          "description": "The caller's stated choice; never infer it from their name or voice."
+        },
+        "phone_number": {
+          "type": "string",
+          "pattern": "^[0-9]{10}$",
+          "description": "Caller-confirmed US phone number, exactly 10 ASCII digits, no country code or formatting."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Valid email address voluntarily provided by the caller. Omit if not provided."
+        },
+        "address_line_1": {
+          "type": "string",
+          "description": "Nonempty street address, trimmed plain text.",
+          "pattern": "^[\\s\\S]+$"
+        },
+        "address_line_2": {
+          "type": "string",
+          "description": "Apartment, suite, or unit voluntarily provided. Omit if not provided."
+        },
+        "city": {
+          "type": "string",
+          "description": "City, 1-100 characters after trimming whitespace.",
+          "pattern": "^[\\s\\S]{1,100}$"
+        },
+        "state": {
+          "type": "string",
+          "description": "Uppercase two-letter abbreviation for one of the 50 US states or DC.",
+          "enum": [
+            "AK",
+            "AL",
+            "AR",
+            "AZ",
+            "CA",
+            "CO",
+            "CT",
+            "DC",
+            "DE",
+            "FL",
+            "GA",
+            "HI",
+            "IA",
+            "ID",
+            "IL",
+            "IN",
+            "KS",
+            "KY",
+            "LA",
+            "MA",
+            "MD",
+            "ME",
+            "MI",
+            "MN",
+            "MO",
+            "MS",
+            "MT",
+            "NC",
+            "ND",
+            "NE",
+            "NH",
+            "NJ",
+            "NM",
+            "NV",
+            "NY",
+            "OH",
+            "OK",
+            "OR",
+            "PA",
+            "RI",
+            "SC",
+            "SD",
+            "TN",
+            "TX",
+            "UT",
+            "VA",
+            "VT",
+            "WA",
+            "WI",
+            "WV",
+            "WY"
+          ]
+        },
+        "zip_code": {
+          "type": "string",
+          "pattern": "^[0-9]{5}(-[0-9]{4})?$",
+          "description": "Five ASCII digits or ZIP+4 with a hyphen; preserve leading zeros."
+        },
+        "insurance_provider": {
+          "type": "string",
+          "description": "Insurance provider, only when the caller chooses to provide it."
+        },
+        "insurance_member_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9]+$",
+          "description": "Insurance member ID: ASCII letters and digits only. Preserve leading zeros."
+        },
+        "preferred_language": {
+          "type": "string",
+          "description": "Preferred language if volunteered; omit on create for the English default. Does not change the call's configured voice language."
+        },
+        "emergency_contact_name": {
+          "type": "string",
+          "description": "Emergency contact's name, only when offered or opted into."
+        },
+        "emergency_contact_phone": {
+          "type": "string",
+          "pattern": "^[0-9]{10}$",
+          "description": "Emergency contact's US number, exactly 10 ASCII digits."
+        }
+      },
+      "required": [
+        "patient_id"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "first_name": "Jamie",
+  "last_name": "Demo",
+  "date_of_birth": "1992-05-10",
+  "sex": "Other",
+  "phone_number": "2125550199",
+  "email": "jamie@example.com",
+  "address_line_1": "123 Demo Street",
+  "city": "New York",
+  "state": "NY",
+  "zip_code": "10001"
+}
