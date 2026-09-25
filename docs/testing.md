@@ -42,7 +42,8 @@ its `httpx` integration in favor of `httpx2`. It does not fail the tests or affe
 the application endpoints. Dependency upgrades should rerun this suite.
 
 The concurrency test is a small correctness check, not a load benchmark. These
-tests do not execute a live Vapi voice call or the Phase 4 web interface.
+tests do not execute a live Vapi voice call or the Phase 4 web interface
+(see [phase-4.md](phase-4.md) for manual browser checks).
 The Phase 3 prompt and setup instructions exist; conversational acceptance
 checks are listed in [the Vapi setup guide](vapi-assistant-config.md).
 They also do not claim production security certification or multi-worker startup

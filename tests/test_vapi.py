@@ -93,9 +93,35 @@ def test_lookup_matches_rest_for_multiple_and_deleted_records(client, created, p
     assert check(client.post("/vapi/lookup-patient-by-phone", json={"phone_number": "2125550000"}), 200)["data"] == []
 
 
-@pytest.mark.parametrize("body", [{}, {"phone_number": "123"}, {"phone_number": None}, {"phone_number": "2125550199", "extra": True}])
+@pytest.mark.parametrize("body", [{}, {"phone_number": "123"}, {"phone_number": None}])
 def test_lookup_validation(client, body):
     check(client.post("/vapi/lookup-patient-by-phone", json=body), 422)
+
+
+def test_lookup_accepts_formatted_extra_and_nested_payloads(client, created, payload):
+    phone = payload["phone_number"]
+    assert check(client.post("/vapi/lookup-patient-by-phone", json={
+        "phone_number": f"({phone[:3]}) {phone[3:6]}-{phone[6:]}",
+        "extra": True,
+    }), 200)["data"][0]["patient_id"] == created["patient_id"]
+    assert check(client.post("/vapi/lookup-patient-by-phone", json={
+        "phone_number": f"+1{phone}",
+    }), 200)["data"][0]["patient_id"] == created["patient_id"]
+    nested = {
+        "message": {
+            "type": "tool-calls",
+            "toolCalls": [{
+                "id": "call_test",
+                "function": {
+                    "name": "lookup_patient_by_phone",
+                    "arguments": {"phone_number": phone},
+                },
+            }],
+        },
+    }
+    assert check(client.post("/vapi/lookup-patient-by-phone", json=nested), 200)["data"][0][
+        "patient_id"
+    ] == created["patient_id"]
 
 
 @pytest.mark.parametrize("changes", [
